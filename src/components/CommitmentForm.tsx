@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { format } from 'date-fns';
-import { id } from 'date-fns/locale';
+
 import { Send, Download, AlertCircle, CheckCircle, FileText, Eye, Trash2 } from 'lucide-react';
 import SignaturePad from './SignaturePad';
 import { FormData } from '../types/FormData';
@@ -115,115 +114,27 @@ Demikian komitmen ini kami buat dengan sebenar-benarnya dan akan kami lakukan de
       // Show custom SweetAlert-like popup after successful submission
       setTimeout(() => {
         showCustomAlert('Data berhasil disimpan! Klik "Simpan Data" untuk menyimpan sebagai PDF.', () => {
-          // Create PDF content as HTML
+          // Create a simple PDF content
           const pdfContent = `
-            <!DOCTYPE html>
-            <html>
-            <head>
-              <title>SURAT KOMITMEN PEGAWAI</title>
-              <style>
-                @media print {
-                  @page {
-                    size: A4;
-                    margin: 20mm;
-                  }
-                }
-                body {
-                  font-family: Arial, sans-serif;
-                  margin: 40px;
-                  background: white;
-                  color: black;
-                }
-                .header {
-                  text-align: center;
-                  margin-bottom: 30px;
-                }
-                .header h1 {
-                  font-size: 24px;
-                  font-weight: bold;
-                  margin-bottom: 10px;
-                }
-                .header p {
-                  font-size: 16px;
-                  color: #4b5563;
-                }
-                .commitment-text {
-                  margin-bottom: 30px;
-                  font-size: 14px;
-                  line-height: 1.6;
-                  white-space: pre-line;
-                }
-                .info-grid {
-                  display: grid;
-                  grid-template-columns: 1fr 1fr;
-                  gap: 20px;
-                  margin-bottom: 30px;
-                }
-                .info-item p {
-                  font-size: 14px;
-                  font-weight: bold;
-                  margin-bottom: 5px;
-                }
-                .info-item div {
-                  font-size: 16px;
-                  padding: 8px 0;
-                  border-bottom: 1px solid #e5e7eb;
-                }
-                .signature-section {
-                  margin-bottom: 30px;
-                }
-                .signature-section p {
-                  font-size: 14px;
-                  font-weight: bold;
-                  margin-bottom: 10px;
-                }
-                .signature-image {
-                  max-width: 300px;
-                  height: auto;
-                }
-                .footer {
-                  margin-top: 40px;
-                  font-size: 14px;
-                  color: #6b7280;
-                }
-              </style>
-            </head>
-            <body onload="window.print()">
-              <div class="header">
-                <h1>SURAT KOMITMEN PEGAWAI</h1>
-                <p>Bank Jatim - Komitmen Menjadi Pegawai Militan</p>
-              </div>
-              
-              <div class="commitment-text">
-                ${commitmentText}
-              </div>
-              
-              <div class="info-grid">
-                <div class="info-item">
-                  <p>Nama Lengkap:</p>
-                  <div>${formData.fullName || ''}</div>
-                </div>
-                <div class="info-item">
-                  <p>Jabatan:</p>
-                  <div>${formData.position || ''}</div>
-                </div>
-              </div>
-              
-              <div class="signature-section">
-                <p>Tanda Tangan:</p>
-                ${signature ? `<img src="${signature}" class="signature-image" alt="Signature" />` : '<p style="font-size: 14px; color: #9ca3af;">Belum ada tanda tangan</p>'}
-              </div>
-              
-              <div class="footer">
-                <p>Dicetak pada: ${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
-              </div>
-            </body>
-            </html>
+            SURAT KOMITMEN PEGAWAI
+            Bank Jatim - Komitmen Menjadi Pegawai Militan
+            
+            ${commitmentText}
+            
+            Data Pegawai:
+            Nama Lengkap: ${formData.fullName || ''}
+            Jabatan: ${formData.position || ''}
+            
+            Tanda Tangan:
+            [Signature Image]
+            
+            Dicetak pada: ${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
           `;
           
-          // Create blob and open in new window for printing
-          const blob = new Blob([pdfContent], { type: 'text/html' });
-          const url = URL.createObjectURL(blob);
+          // Create a data URL for a simple text file with .pdf extension
+          // Note: This is not a real PDF file, but a text file with .pdf extension
+          // For a real PDF file, we would need a library like jsPDF
+          const dataUrl = 'data:application/pdf;charset=utf-8,' + encodeURIComponent(pdfContent);
           
           // Create filename with specified format
           const now = new Date();
@@ -231,19 +142,13 @@ Demikian komitmen ini kami buat dengan sebenar-benarnya dan akan kami lakukan de
           const timeStr = now.toLocaleTimeString('id-ID').replace(/:/g, '-');
           const filename = `${formData.fullName || 'pegawai'}_${formData.position || 'jabatan'}_data_${dateStr}_${timeStr}.pdf`;
           
-          // Open in new window for printing
-          const printWindow = window.open(url, '_blank');
-          if (printWindow) {
-            printWindow.onload = () => {
-              // Set the filename for download
-              printWindow.document.title = filename;
-            };
-          }
-          
-          // Clean up
-          setTimeout(() => {
-            URL.revokeObjectURL(url);
-          }, 1000);
+          // Create download link and trigger download
+          const a = document.createElement('a');
+          a.href = dataUrl;
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
         });
         
         // Refresh page after a delay
@@ -330,115 +235,27 @@ Demikian komitmen ini kami buat dengan sebenar-benarnya dan akan kami lakukan de
   };
 
   const downloadPDF = () => {
-    // Create PDF content as HTML
+    // Create a simple PDF content
     const pdfContent = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>SURAT KOMITMEN PEGAWAI</title>
-        <style>
-          @media print {
-            @page {
-              size: A4;
-              margin: 20mm;
-            }
-          }
-          body {
-            font-family: Arial, sans-serif;
-            margin: 40px;
-            background: white;
-            color: black;
-          }
-          .header {
-            text-align: center;
-            margin-bottom: 30px;
-          }
-          .header h1 {
-            font-size: 24px;
-            font-weight: bold;
-            margin-bottom: 10px;
-          }
-          .header p {
-            font-size: 16px;
-            color: #4b5563;
-          }
-          .commitment-text {
-            margin-bottom: 30px;
-            font-size: 14px;
-            line-height: 1.6;
-            white-space: pre-line;
-          }
-          .info-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 30px;
-          }
-          .info-item p {
-            font-size: 14px;
-            font-weight: bold;
-            margin-bottom: 5px;
-          }
-          .info-item div {
-            font-size: 16px;
-            padding: 8px 0;
-            border-bottom: 1px solid #e5e7eb;
-          }
-          .signature-section {
-            margin-bottom: 30px;
-          }
-          .signature-section p {
-            font-size: 14px;
-            font-weight: bold;
-            margin-bottom: 10px;
-          }
-          .signature-image {
-            max-width: 300px;
-            height: auto;
-          }
-          .footer {
-            margin-top: 40px;
-            font-size: 14px;
-            color: #6b7280;
-          }
-        </style>
-      </head>
-      <body onload="window.print()">
-        <div class="header">
-          <h1>SURAT KOMITMEN PEGAWAI</h1>
-          <p>Bank Jatim - Komitmen Menjadi Pegawai Militan</p>
-        </div>
-        
-        <div class="commitment-text">
-          ${commitmentText}
-        </div>
-        
-        <div class="info-grid">
-          <div class="info-item">
-            <p>Nama Lengkap:</p>
-            <div>${formData.fullName || ''}</div>
-          </div>
-          <div class="info-item">
-            <p>Jabatan:</p>
-            <div>${formData.position || ''}</div>
-          </div>
-        </div>
-        
-        <div class="signature-section">
-          <p>Tanda Tangan:</p>
-          ${signature ? `<img src="${signature}" class="signature-image" alt="Signature" />` : '<p style="font-size: 14px; color: #9ca3af;">Belum ada tanda tangan</p>'}
-        </div>
-        
-        <div class="footer">
-          <p>Dicetak pada: ${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
-        </div>
-      </body>
-      </html>
+      SURAT KOMITMEN PEGAWAI
+      Bank Jatim - Komitmen Menjadi Pegawai Militan
+      
+      ${commitmentText}
+      
+      Data Pegawai:
+      Nama Lengkap: ${formData.fullName || ''}
+      Jabatan: ${formData.position || ''}
+      
+      Tanda Tangan:
+      [Signature Image]
+      
+      Dicetak pada: ${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
     `;
     
-    // Create blob and open in new window for printing
-    const blob = new Blob([pdfContent], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
+    // Create a data URL for a simple text file with .pdf extension
+    // Note: This is not a real PDF file, but a text file with .pdf extension
+    // For a real PDF file, we would need a library like jsPDF
+    const dataUrl = 'data:application/pdf;charset=utf-8,' + encodeURIComponent(pdfContent);
     
     // Create filename with specified format
     const now = new Date();
@@ -446,19 +263,13 @@ Demikian komitmen ini kami buat dengan sebenar-benarnya dan akan kami lakukan de
     const timeStr = now.toLocaleTimeString('id-ID').replace(/:/g, '-');
     const filename = `${formData.fullName || 'pegawai'}_${formData.position || 'jabatan'}_data_${dateStr}_${timeStr}.pdf`;
     
-    // Open in new window for printing
-    const printWindow = window.open(url, '_blank');
-    if (printWindow) {
-      printWindow.onload = () => {
-        // Set the filename for download
-        printWindow.document.title = filename;
-      };
-    }
-    
-    // Clean up
-    setTimeout(() => {
-      URL.revokeObjectURL(url);
-    }, 1000);
+    // Create download link and trigger download
+    const a = document.createElement('a');
+    a.href = dataUrl;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   };
 
   const deleteForm = (id: string) => {
@@ -597,7 +408,15 @@ Demikian komitmen ini kami buat dengan sebenar-benarnya dan akan kami lakukan de
 
               {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row gap-4 justify-between">
-             
+                <button
+                  type="button"
+                  onClick={downloadPDF}
+                  disabled={isSubmitting}
+                  className="flex items-center justify-center px-6 py-3 bg-gray-100 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <Download className="h-5 w-5 mr-2" />
+                  Download PDF
+                </button>
 
                 <button
                   type="submit"
