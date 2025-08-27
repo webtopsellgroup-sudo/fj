@@ -112,73 +112,144 @@ Demikian komitmen ini kami buat dengan sebenar-benarnya dan akan kami lakukan de
       setSubmitStatus('success');
       setStatusMessage('Form berhasil dikirim! Data telah disimpan secara lokal dan dikirim ke server.');
       
-      // Show popup and download PDF after successful submission
+      // Show custom SweetAlert-like popup after successful submission
       setTimeout(() => {
-        // Create PDF content
-        const printArea = document.createElement('div');
-        printArea.id = 'print-area';
-        printArea.style.position = 'absolute';
-        printArea.style.top = '-1000px';
-        printArea.style.left = '-1000px';
-        printArea.style.width = '800px';
-        printArea.style.backgroundColor = 'white';
-        printArea.style.padding = '40px';
-        printArea.style.fontFamily = 'Arial, sans-serif';
-        
-        // Add content to print area
-        printArea.innerHTML = `
-          <div style="text-align: center; margin-bottom: 30px;">
-            <h1 style="font-size: 24px; font-weight: bold; margin-bottom: 10px;">SURAT KOMITMEN PEGAWAI</h1>
-            <p style="font-size: 16px; color: #4b5563;">Bank Jatim - Komitmen Menjadi Pegawai Militan</p>
-          </div>
-          
-          <div style="margin-bottom: 30px;">
-            <div style="white-space: pre-line; font-size: 14px; line-height: 1.6; margin-bottom: 30px;">
-              ${commitmentText}
-            </div>
-          </div>
-          
-          <div style="margin-bottom: 30px;">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-              <div>
-                <p style="font-size: 14px; font-weight: bold; margin-bottom: 5px;">Nama Lengkap:</p>
-                <p style="font-size: 16px; padding: 8px 0;">${formData.fullName || ''}</p>
+        showCustomAlert('Data berhasil disimpan! Klik "Simpan Data" untuk menyimpan sebagai PDF.', () => {
+          // Create PDF content as HTML
+          const pdfContent = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <title>SURAT KOMITMEN PEGAWAI</title>
+              <style>
+                @media print {
+                  @page {
+                    size: A4;
+                    margin: 20mm;
+                  }
+                }
+                body {
+                  font-family: Arial, sans-serif;
+                  margin: 40px;
+                  background: white;
+                  color: black;
+                }
+                .header {
+                  text-align: center;
+                  margin-bottom: 30px;
+                }
+                .header h1 {
+                  font-size: 24px;
+                  font-weight: bold;
+                  margin-bottom: 10px;
+                }
+                .header p {
+                  font-size: 16px;
+                  color: #4b5563;
+                }
+                .commitment-text {
+                  margin-bottom: 30px;
+                  font-size: 14px;
+                  line-height: 1.6;
+                  white-space: pre-line;
+                }
+                .info-grid {
+                  display: grid;
+                  grid-template-columns: 1fr 1fr;
+                  gap: 20px;
+                  margin-bottom: 30px;
+                }
+                .info-item p {
+                  font-size: 14px;
+                  font-weight: bold;
+                  margin-bottom: 5px;
+                }
+                .info-item div {
+                  font-size: 16px;
+                  padding: 8px 0;
+                  border-bottom: 1px solid #e5e7eb;
+                }
+                .signature-section {
+                  margin-bottom: 30px;
+                }
+                .signature-section p {
+                  font-size: 14px;
+                  font-weight: bold;
+                  margin-bottom: 10px;
+                }
+                .signature-image {
+                  max-width: 300px;
+                  height: auto;
+                }
+                .footer {
+                  margin-top: 40px;
+                  font-size: 14px;
+                  color: #6b7280;
+                }
+              </style>
+            </head>
+            <body onload="window.print()">
+              <div class="header">
+                <h1>SURAT KOMITMEN PEGAWAI</h1>
+                <p>Bank Jatim - Komitmen Menjadi Pegawai Militan</p>
               </div>
-              <div>
-                <p style="font-size: 14px; font-weight: bold; margin-bottom: 5px;">Jabatan:</p>
-                <p style="font-size: 16px; padding: 8px 0;">${formData.position || ''}</p>
+              
+              <div class="commitment-text">
+                ${commitmentText}
               </div>
-            </div>
-          </div>
+              
+              <div class="info-grid">
+                <div class="info-item">
+                  <p>Nama Lengkap:</p>
+                  <div>${formData.fullName || ''}</div>
+                </div>
+                <div class="info-item">
+                  <p>Jabatan:</p>
+                  <div>${formData.position || ''}</div>
+                </div>
+              </div>
+              
+              <div class="signature-section">
+                <p>Tanda Tangan:</p>
+                ${signature ? `<img src="${signature}" class="signature-image" alt="Signature" />` : '<p style="font-size: 14px; color: #9ca3af;">Belum ada tanda tangan</p>'}
+              </div>
+              
+              <div class="footer">
+                <p>Dicetak pada: ${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+              </div>
+            </body>
+            </html>
+          `;
           
-          <div style="margin-bottom: 30px;">
-            <p style="font-size: 14px; font-weight: bold; margin-bottom: 10px;">Tanda Tangan:</p>
-            ${signature ? `<img src="${signature}" style="max-width: 300px; height: auto;" alt="Signature" />` : '<p style="font-size: 14px; color: #9ca3af;">Belum ada tanda tangan</p>'}
-          </div>
+          // Create blob and open in new window for printing
+          const blob = new Blob([pdfContent], { type: 'text/html' });
+          const url = URL.createObjectURL(blob);
           
-          <div style="margin-top: 40px; font-size: 14px; color: #6b7280;">
-            <p>Dicetak pada: ${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
-          </div>
-        `;
+          // Create filename with specified format
+          const now = new Date();
+          const dateStr = now.toLocaleDateString('id-ID').replace(/\//g, '-');
+          const timeStr = now.toLocaleTimeString('id-ID').replace(/:/g, '-');
+          const filename = `${formData.fullName || 'pegawai'}_${formData.position || 'jabatan'}_data_${dateStr}_${timeStr}.pdf`;
+          
+          // Open in new window for printing
+          const printWindow = window.open(url, '_blank');
+          if (printWindow) {
+            printWindow.onload = () => {
+              // Set the filename for download
+              printWindow.document.title = filename;
+            };
+          }
+          
+          // Clean up
+          setTimeout(() => {
+            URL.revokeObjectURL(url);
+          }, 1000);
+        });
         
-        // Add to document
-        document.body.appendChild(printArea);
-        
-        // Show popup
-        const shouldDownload = window.confirm('Data berhasil disimpan! Klik OK untuk mengunduh PDF.');
-        
-        if (shouldDownload) {
-          // Print (which can be saved as PDF)
-          window.print();
-        }
-        
-        // Remove print area after a delay
+        // Refresh page after a delay
         setTimeout(() => {
-          document.body.removeChild(printArea);
-        }, 1000);
-        
-        // Refresh page
-        window.location.reload();
+          window.location.reload();
+        }, 5000);
       }, 3000);
 
     } catch (error) {
@@ -190,63 +261,203 @@ Demikian komitmen ini kami buat dengan sebenar-benarnya dan akan kami lakukan de
     }
   };
 
-  const downloadPDF = () => {
-    // Create a hidden print area
-    const printArea = document.createElement('div');
-    printArea.id = 'print-area';
-    printArea.style.position = 'absolute';
-    printArea.style.top = '-1000px';
-    printArea.style.left = '-1000px';
-    printArea.style.width = '800px';
-    printArea.style.backgroundColor = 'white';
-    printArea.style.padding = '40px';
-    printArea.style.fontFamily = 'Arial, sans-serif';
+  // Custom SweetAlert-like popup
+  const showCustomAlert = (message: string, onConfirm: () => void) => {
+    // Create overlay
+    const overlay = document.createElement('div');
+    overlay.style.position = 'fixed';
+    overlay.style.top = '0';
+    overlay.style.left = '0';
+    overlay.style.width = '100%';
+    overlay.style.height = '100%';
+    overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+    overlay.style.display = 'flex';
+    overlay.style.justifyContent = 'center';
+    overlay.style.alignItems = 'center';
+    overlay.style.zIndex = '10000';
+    overlay.id = 'custom-alert-overlay';
     
-    // Add content to print area
-    printArea.innerHTML = `
-      <div style="text-align: center; margin-bottom: 30px;">
-        <h1 style="font-size: 24px; font-weight: bold; margin-bottom: 10px;">SURAT KOMITMEN PEGAWAI</h1>
-        <p style="font-size: 16px; color: #4b5563;">Bank Jatim - Komitmen Menjadi Pegawai Militan</p>
-      </div>
-      
-      <div style="margin-bottom: 30px;">
-        <div style="white-space: pre-line; font-size: 14px; line-height: 1.6; margin-bottom: 30px;">
-          ${commitmentText}
-        </div>
-      </div>
-      
-      <div style="margin-bottom: 30px;">
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-          <div>
-            <p style="font-size: 14px; font-weight: bold; margin-bottom: 5px;">Nama Lengkap:</p>
-            <p style="font-size: 16px; padding: 8px 0;">${formData.fullName || ''}</p>
-          </div>
-          <div>
-            <p style="font-size: 14px; font-weight: bold; margin-bottom: 5px;">Jabatan:</p>
-            <p style="font-size: 16px; padding: 8px 0;">${formData.position || ''}</p>
-          </div>
-        </div>
-      </div>
-      
-      <div style="margin-bottom: 30px;">
-        <p style="font-size: 14px; font-weight: bold; margin-bottom: 10px;">Tanda Tangan:</p>
-        ${signature ? `<img src="${signature}" style="max-width: 300px; height: auto;" alt="Signature" />` : '<p style="font-size: 14px; color: #9ca3af;">Belum ada tanda tangan</p>'}
-      </div>
-      
-      <div style="margin-top: 40px; font-size: 14px; color: #6b7280;">
-        <p>Dicetak pada: ${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+    // Create popup container
+    const popup = document.createElement('div');
+    popup.style.backgroundColor = 'white';
+    popup.style.borderRadius = '8px';
+    popup.style.padding = '30px';
+    popup.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
+    popup.style.maxWidth = '400px';
+    popup.style.width = '90%';
+    popup.style.textAlign = 'center';
+    popup.style.fontFamily = 'Arial, sans-serif';
+    
+    // Add content to popup
+    popup.innerHTML = `
+      <h2 style="margin-top: 0; color: #333; font-size: 20px;">Notifikasi</h2>
+      <p style="color: #666; font-size: 16px; margin: 20px 0;">${message}</p>
+      <div style="display: flex; justify-content: center; gap: 10px; margin-top: 20px;">
+        <button id="cancel-btn" style="padding: 10px 20px; background-color: #f1f1f1; color: #333; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">Batal</button>
+        <button id="confirm-btn" style="padding: 10px 20px; background-color: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">Simpan Data</button>
       </div>
     `;
     
-    // Add to document
-    document.body.appendChild(printArea);
+    // Add popup to overlay
+    overlay.appendChild(popup);
     
-    // Print
-    window.print();
+    // Add overlay to document
+    document.body.appendChild(overlay);
     
-    // Remove print area after a delay
+    // Add event listeners
+    const confirmBtn = popup.querySelector('#confirm-btn');
+    const cancelBtn = popup.querySelector('#cancel-btn');
+    
+    const closePopup = () => {
+      document.body.removeChild(overlay);
+    };
+    
+    confirmBtn?.addEventListener('click', () => {
+      onConfirm();
+      closePopup();
+    });
+    
+    cancelBtn?.addEventListener('click', () => {
+      closePopup();
+    });
+    
+    // Close popup when clicking outside
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) {
+        closePopup();
+      }
+    });
+  };
+
+  const downloadPDF = () => {
+    // Create PDF content as HTML
+    const pdfContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>SURAT KOMITMEN PEGAWAI</title>
+        <style>
+          @media print {
+            @page {
+              size: A4;
+              margin: 20mm;
+            }
+          }
+          body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background: white;
+            color: black;
+          }
+          .header {
+            text-align: center;
+            margin-bottom: 30px;
+          }
+          .header h1 {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+          }
+          .header p {
+            font-size: 16px;
+            color: #4b5563;
+          }
+          .commitment-text {
+            margin-bottom: 30px;
+            font-size: 14px;
+            line-height: 1.6;
+            white-space: pre-line;
+          }
+          .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+          }
+          .info-item p {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 5px;
+          }
+          .info-item div {
+            font-size: 16px;
+            padding: 8px 0;
+            border-bottom: 1px solid #e5e7eb;
+          }
+          .signature-section {
+            margin-bottom: 30px;
+          }
+          .signature-section p {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 10px;
+          }
+          .signature-image {
+            max-width: 300px;
+            height: auto;
+          }
+          .footer {
+            margin-top: 40px;
+            font-size: 14px;
+            color: #6b7280;
+          }
+        </style>
+      </head>
+      <body onload="window.print()">
+        <div class="header">
+          <h1>SURAT KOMITMEN PEGAWAI</h1>
+          <p>Bank Jatim - Komitmen Menjadi Pegawai Militan</p>
+        </div>
+        
+        <div class="commitment-text">
+          ${commitmentText}
+        </div>
+        
+        <div class="info-grid">
+          <div class="info-item">
+            <p>Nama Lengkap:</p>
+            <div>${formData.fullName || ''}</div>
+          </div>
+          <div class="info-item">
+            <p>Jabatan:</p>
+            <div>${formData.position || ''}</div>
+          </div>
+        </div>
+        
+        <div class="signature-section">
+          <p>Tanda Tangan:</p>
+          ${signature ? `<img src="${signature}" class="signature-image" alt="Signature" />` : '<p style="font-size: 14px; color: #9ca3af;">Belum ada tanda tangan</p>'}
+        </div>
+        
+        <div class="footer">
+          <p>Dicetak pada: ${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+        </div>
+      </body>
+      </html>
+    `;
+    
+    // Create blob and open in new window for printing
+    const blob = new Blob([pdfContent], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    
+    // Create filename with specified format
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('id-ID').replace(/\//g, '-');
+    const timeStr = now.toLocaleTimeString('id-ID').replace(/:/g, '-');
+    const filename = `${formData.fullName || 'pegawai'}_${formData.position || 'jabatan'}_data_${dateStr}_${timeStr}.pdf`;
+    
+    // Open in new window for printing
+    const printWindow = window.open(url, '_blank');
+    if (printWindow) {
+      printWindow.onload = () => {
+        // Set the filename for download
+        printWindow.document.title = filename;
+      };
+    }
+    
+    // Clean up
     setTimeout(() => {
-      document.body.removeChild(printArea);
+      URL.revokeObjectURL(url);
     }, 1000);
   };
 
@@ -386,15 +597,7 @@ Demikian komitmen ini kami buat dengan sebenar-benarnya dan akan kami lakukan de
 
               {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row gap-4 justify-between">
-                <button
-                  type="button"
-                  onClick={downloadPDF}
-                  disabled={isSubmitting}
-                  className="flex items-center justify-center px-6 py-3 bg-gray-100 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  <Download className="h-5 w-5 mr-2" />
-                  Download PDF
-                </button>
+             
 
                 <button
                   type="submit"
@@ -409,7 +612,7 @@ Demikian komitmen ini kami buat dengan sebenar-benarnya dan akan kami lakukan de
                   ) : (
                     <>
                       <Send className="h-5 w-5 mr-2" />
-                      Kirim Komitmen
+                      Submit
                     </>
                   )}
                 </button>
