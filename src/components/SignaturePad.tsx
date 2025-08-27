@@ -37,6 +37,15 @@ const SignaturePad: React.FC<SignaturePadProps> = ({ onSignatureChange, disabled
     ctx.fillRect(0, 0, canvas.width, canvas.height);
   }, []);
 
+  // Cleanup effect to ensure scrolling is re-enabled if component unmounts while modal is open
+  useEffect(() => {
+    return () => {
+      if (isModalOpen) {
+        document.body.style.overflow = 'auto';
+      }
+    };
+  }, [isModalOpen]);
+
   const getCoordinates = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return { x: 0, y: 0 };
@@ -144,10 +153,14 @@ const SignaturePad: React.FC<SignaturePadProps> = ({ onSignatureChange, disabled
   };
 
   const openModal = () => {
+    // Prevent body scrolling when modal is open
+    document.body.style.overflow = 'hidden';
     setIsModalOpen(true);
   };
 
   const closeModal = () => {
+    // Re-enable body scrolling when modal is closed
+    document.body.style.overflow = 'auto';
     setIsModalOpen(false);
   };
 
@@ -250,6 +263,16 @@ const SignaturePad: React.FC<SignaturePadProps> = ({ onSignatureChange, disabled
                   onTouchMove={drawTouch}
                   onTouchEnd={stopDrawingTouch}
                 />
+              </div>
+              <div className="mt-2 flex justify-end">
+                <button
+                  type="button"
+                  onClick={clearSignature}
+                  disabled={disabled}
+                  className="px-3 py-1 text-sm bg-gray-100 text-gray-600 border border-gray-300 rounded hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Hapus Tanda Tangan
+                </button>
               </div>
             </div>
             <div className="p-4 border-t border-gray-200 flex justify-end space-x-3">
