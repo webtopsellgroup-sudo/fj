@@ -112,8 +112,72 @@ Demikian komitmen ini kami buat dengan sebenar-benarnya dan akan kami lakukan de
       setSubmitStatus('success');
       setStatusMessage('Form berhasil dikirim! Data telah disimpan secara lokal dan dikirim ke server.');
       
-      // Refresh page after successful submission
+      // Show popup and download PDF after successful submission
       setTimeout(() => {
+        // Create PDF content
+        const printArea = document.createElement('div');
+        printArea.id = 'print-area';
+        printArea.style.position = 'absolute';
+        printArea.style.top = '-1000px';
+        printArea.style.left = '-1000px';
+        printArea.style.width = '800px';
+        printArea.style.backgroundColor = 'white';
+        printArea.style.padding = '40px';
+        printArea.style.fontFamily = 'Arial, sans-serif';
+        
+        // Add content to print area
+        printArea.innerHTML = `
+          <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="font-size: 24px; font-weight: bold; margin-bottom: 10px;">SURAT KOMITMEN PEGAWAI</h1>
+            <p style="font-size: 16px; color: #4b5563;">Bank Jatim - Komitmen Menjadi Pegawai Militan</p>
+          </div>
+          
+          <div style="margin-bottom: 30px;">
+            <div style="white-space: pre-line; font-size: 14px; line-height: 1.6; margin-bottom: 30px;">
+              ${commitmentText}
+            </div>
+          </div>
+          
+          <div style="margin-bottom: 30px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+              <div>
+                <p style="font-size: 14px; font-weight: bold; margin-bottom: 5px;">Nama Lengkap:</p>
+                <p style="font-size: 16px; padding: 8px 0;">${formData.fullName || ''}</p>
+              </div>
+              <div>
+                <p style="font-size: 14px; font-weight: bold; margin-bottom: 5px;">Jabatan:</p>
+                <p style="font-size: 16px; padding: 8px 0;">${formData.position || ''}</p>
+              </div>
+            </div>
+          </div>
+          
+          <div style="margin-bottom: 30px;">
+            <p style="font-size: 14px; font-weight: bold; margin-bottom: 10px;">Tanda Tangan:</p>
+            ${signature ? `<img src="${signature}" style="max-width: 300px; height: auto;" alt="Signature" />` : '<p style="font-size: 14px; color: #9ca3af;">Belum ada tanda tangan</p>'}
+          </div>
+          
+          <div style="margin-top: 40px; font-size: 14px; color: #6b7280;">
+            <p>Dicetak pada: ${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+          </div>
+        `;
+        
+        // Add to document
+        document.body.appendChild(printArea);
+        
+        // Show popup
+        const shouldDownload = window.confirm('Data berhasil disimpan! Klik OK untuk mengunduh PDF.');
+        
+        if (shouldDownload) {
+          // Print (which can be saved as PDF)
+          window.print();
+        }
+        
+        // Remove print area after a delay
+        setTimeout(() => {
+          document.body.removeChild(printArea);
+        }, 1000);
+        
+        // Refresh page
         window.location.reload();
       }, 3000);
 
@@ -127,9 +191,63 @@ Demikian komitmen ini kami buat dengan sebenar-benarnya dan akan kami lakukan de
   };
 
   const downloadPDF = () => {
-    // This would implement PDF generation - for now just show placeholder
-    setStatusMessage('Fitur download PDF akan segera tersedia');
-    setTimeout(() => setStatusMessage(''), 3000);
+    // Create a hidden print area
+    const printArea = document.createElement('div');
+    printArea.id = 'print-area';
+    printArea.style.position = 'absolute';
+    printArea.style.top = '-1000px';
+    printArea.style.left = '-1000px';
+    printArea.style.width = '800px';
+    printArea.style.backgroundColor = 'white';
+    printArea.style.padding = '40px';
+    printArea.style.fontFamily = 'Arial, sans-serif';
+    
+    // Add content to print area
+    printArea.innerHTML = `
+      <div style="text-align: center; margin-bottom: 30px;">
+        <h1 style="font-size: 24px; font-weight: bold; margin-bottom: 10px;">SURAT KOMITMEN PEGAWAI</h1>
+        <p style="font-size: 16px; color: #4b5563;">Bank Jatim - Komitmen Menjadi Pegawai Militan</p>
+      </div>
+      
+      <div style="margin-bottom: 30px;">
+        <div style="white-space: pre-line; font-size: 14px; line-height: 1.6; margin-bottom: 30px;">
+          ${commitmentText}
+        </div>
+      </div>
+      
+      <div style="margin-bottom: 30px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+          <div>
+            <p style="font-size: 14px; font-weight: bold; margin-bottom: 5px;">Nama Lengkap:</p>
+            <p style="font-size: 16px; padding: 8px 0;">${formData.fullName || ''}</p>
+          </div>
+          <div>
+            <p style="font-size: 14px; font-weight: bold; margin-bottom: 5px;">Jabatan:</p>
+            <p style="font-size: 16px; padding: 8px 0;">${formData.position || ''}</p>
+          </div>
+        </div>
+      </div>
+      
+      <div style="margin-bottom: 30px;">
+        <p style="font-size: 14px; font-weight: bold; margin-bottom: 10px;">Tanda Tangan:</p>
+        ${signature ? `<img src="${signature}" style="max-width: 300px; height: auto;" alt="Signature" />` : '<p style="font-size: 14px; color: #9ca3af;">Belum ada tanda tangan</p>'}
+      </div>
+      
+      <div style="margin-top: 40px; font-size: 14px; color: #6b7280;">
+        <p>Dicetak pada: ${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+      </div>
+    `;
+    
+    // Add to document
+    document.body.appendChild(printArea);
+    
+    // Print
+    window.print();
+    
+    // Remove print area after a delay
+    setTimeout(() => {
+      document.body.removeChild(printArea);
+    }, 1000);
   };
 
   const deleteForm = (id: string) => {
