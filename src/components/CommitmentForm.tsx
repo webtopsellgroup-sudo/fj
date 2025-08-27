@@ -6,6 +6,7 @@ import { FormData } from '../types/FormData';
 import { uploadToImgBB } from '../services/imageUpload';
 import { sendToWebhook } from '../services/webhook';
 import { saveToLocalStorage, getAllFromLocalStorage, deleteFromLocalStorage } from '../services/localStorage';
+import { jsPDF } from 'jspdf';
 
 const CommitmentForm: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'form' | 'results'>('form');
@@ -114,41 +115,7 @@ Demikian komitmen ini kami buat dengan sebenar-benarnya dan akan kami lakukan de
       // Show custom SweetAlert-like popup after successful submission
       setTimeout(() => {
         showCustomAlert('Data berhasil disimpan! Klik "Simpan Data" untuk menyimpan sebagai PDF.', () => {
-          // Create a simple PDF content
-          const pdfContent = `
-            SURAT KOMITMEN PEGAWAI
-            Bank Jatim - Komitmen Menjadi Pegawai Militan
-            
-            ${commitmentText}
-            
-            Data Pegawai:
-            Nama Lengkap: ${formData.fullName || ''}
-            Jabatan: ${formData.position || ''}
-            
-            Tanda Tangan:
-            [Signature Image]
-            
-            Dicetak pada: ${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
-          `;
-          
-          // Create a data URL for a simple text file with .pdf extension
-          // Note: This is not a real PDF file, but a text file with .pdf extension
-          // For a real PDF file, we would need a library like jsPDF
-          const dataUrl = 'data:application/pdf;charset=utf-8,' + encodeURIComponent(pdfContent);
-          
-          // Create filename with specified format
-          const now = new Date();
-          const dateStr = now.toLocaleDateString('id-ID').replace(/\//g, '-');
-          const timeStr = now.toLocaleTimeString('id-ID').replace(/:/g, '-');
-          const filename = `${formData.fullName || 'pegawai'}_${formData.position || 'jabatan'}_data_${dateStr}_${timeStr}.pdf`;
-          
-          // Create download link and trigger download
-          const a = document.createElement('a');
-          a.href = dataUrl;
-          a.download = filename;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
+          generateAndDownloadPDF();
         });
         
         // Refresh page after a delay
@@ -234,42 +201,82 @@ Demikian komitmen ini kami buat dengan sebenar-benarnya dan akan kami lakukan de
     });
   };
 
-  const downloadPDF = () => {
-    // Create a simple PDF content
-    const pdfContent = `
-      SURAT KOMITMEN PEGAWAI
-      Bank Jatim - Komitmen Menjadi Pegawai Militan
-      
-      ${commitmentText}
-      
-      Data Pegawai:
-      Nama Lengkap: ${formData.fullName || ''}
-      Jabatan: ${formData.position || ''}
-      
-      Tanda Tangan:
-      [Signature Image]
-      
-      Dicetak pada: ${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
-    `;
-    
-    // Create a data URL for a simple text file with .pdf extension
-    // Note: This is not a real PDF file, but a text file with .pdf extension
-    // For a real PDF file, we would need a library like jsPDF
-    const dataUrl = 'data:application/pdf;charset=utf-8,' + encodeURIComponent(pdfContent);
-    
-    // Create filename with specified format
+  // Buat PDF valid dengan jsPDF
+  const generateAndDownloadPDF = () => {
+    const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 40;
+    let y = margin;
+
+    // Judul
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(16);
+    doc.text('SURAT KOMITMEN PEGAWAI', pageWidth / 2, y, { align: 'center' });
+    y += 24;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(12);
+    doc.text('Bank Jatim - Komitmen Menjadi Pegawai Militan', pageWidth / 2, y, { align: 'center' });
+    y += 24;
+
+    // Teks komitmen (wrap)
+    const bodyFontSize = 11;
+    doc.setFontSize(bodyFontSize);
+    const wrappedCommitment = doc.splitTextToSize(commitmentText, pageWidth - margin * 2);
+    doc.text(wrappedCommitment, margin, y);
+    y += wrappedCommitment.length * (bodyFontSize + 3) + 12;
+
+    // Data pegawai
+    doc.setFont('helvetica', 'bold');
+    doc.text('Data Pegawai:', margin, y);
+    y += 16;
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Nama Lengkap: ${formData.fullName || ''}`, margin, y);
+    y += 16;
+    doc.text(`Jabatan: ${formData.position || ''}`, margin, y);
+    y += 24;
+
+    // Tanda tangan (jika ada)
+    if (signature) {
+      doc.setFont('helvetica', 'bold');
+      doc.text('Tanda Tangan:', margin, y);
+      y += 8;
+
+      try {
+        // Hitung ukuran gambar agar pas
+        const imgProps = (doc as any).getImageProperties(signature);
+        const maxWidth = pageWidth - margin * 2;
+        const scale = Math.min(maxWidth / imgProps.width, 120 / imgProps.height); // tinggi target ~120pt
+        const imgW = imgProps.width * scale;
+        const imgH = imgProps.height * scale;
+
+        doc.addImage(signature, 'PNG', margin, y, imgW, imgH);
+        y += imgH + 16;
+      } catch {
+        // Jika gagal membaca properti gambar, tetap coba sisipkan ukuran default
+        doc.addImage(signature, 'PNG', margin, y, 240, 120);
+        y += 120 + 16;
+      }
+    }
+
+    // Tanggal cetak
+    doc.setFont('helvetica', 'normal');
+    doc.text(
+      `Dicetak pada: ${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}`,
+      margin,
+      y
+    );
+
+    // Nama file
     const now = new Date();
     const dateStr = now.toLocaleDateString('id-ID').replace(/\//g, '-');
     const timeStr = now.toLocaleTimeString('id-ID').replace(/:/g, '-');
     const filename = `${formData.fullName || 'pegawai'}_${formData.position || 'jabatan'}_data_${dateStr}_${timeStr}.pdf`;
-    
-    // Create download link and trigger download
-    const a = document.createElement('a');
-    a.href = dataUrl;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+
+    doc.save(filename);
+  };
+
+  const downloadPDF = () => {
+    generateAndDownloadPDF();
   };
 
   const deleteForm = (id: string) => {
