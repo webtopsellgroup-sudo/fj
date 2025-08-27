@@ -1,4 +1,6 @@
 export interface FormData {
+  fullName?: string;
+  position?: string;
   signatureUrl?: string;
   submittedAt: string;
 }

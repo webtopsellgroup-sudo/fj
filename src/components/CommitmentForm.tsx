@@ -112,16 +112,9 @@ Demikian komitmen ini kami buat dengan sebenar-benarnya dan akan kami lakukan de
       setSubmitStatus('success');
       setStatusMessage('Form berhasil dikirim! Data telah disimpan secara lokal dan dikirim ke server.');
       
-      // Reset form after successful submission
+      // Refresh page after successful submission
       setTimeout(() => {
-        setFormData({
-          fullName: '',
-          submittedAt: ''
-        });
-        setSignature('');
-        setSubmitStatus('idle');
-        setStatusMessage('');
-        loadSavedForms(); // Refresh saved forms
+        window.location.reload();
       }, 3000);
 
     } catch (error) {
